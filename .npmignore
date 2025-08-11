@@ -1,0 +1,48 @@
+# Development folders
+.claude-flow/
+.swarm/
+node_modules/
+
+# Documentation and specs
+specs/
+docs/
+IMPLEMENTATION.md
+MIGRATION-GUIDE.md
+
+# Source files (only publish dist)
+src/
+*.ts
+!*.d.ts
+
+# Test files
+*.test.ts
+*.test.js
+*.spec.ts
+*.spec.js
+__tests__/
+coverage/
+
+# Config files
+.gitignore
+.npmignore
+tsconfig.json
+jest.config.js
+.eslintrc
+.prettierrc
+
+# Examples (optional - you might want to include these)
+examples/
+
+# IDE and OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.log
+*.tsbuildinfo
+
+# Git
+.git/
+.github/

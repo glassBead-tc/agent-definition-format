@@ -1,0 +1,129 @@
+version: "1.0"
+agent:
+  name: "customer-support"
+  description: "Automated customer support agent with order tracking and returns"
+  
+  capabilities:
+    sampling: true
+    elicitation: true
+    tools: true
+    resources: true
+    
+  tools:
+    - name: "lookup_order"
+      description: "Find customer order by ID"
+      parameters:
+        order_id:
+          type: "string"
+          description: "Order ID to lookup"
+          required: true
+      handler: "handlers.lookupOrder"
+      
+    - name: "process_return"
+      description: "Initiate a return process"
+      parameters:
+        order_id:
+          type: "string"
+          required: true
+        reason:
+          type: "string"
+          required: true
+      handler: "handlers.processReturn"
+    
+  resources:
+    - uri: "/support/faqs"
+      description: "Frequently asked questions"
+      handler: "handlers.getFAQs"
+      
+    - uri: "/support/policies"
+      description: "Company policies"
+      
+  workflows:
+    main:
+      initial: "greeting"
+      
+      states:
+        greeting:
+          type: "elicitation"
+          prompt: "Welcome to customer support!"
+          elicitation:
+            type: "select"
+            prompt: "How can I help you today?"
+            options: 
+              - "Track Order"
+              - "Return Item"
+              - "FAQ"
+              - "Other"
+          transitions:
+            "Track Order": "track_order"
+            "Return Item": "return_flow"
+            "FAQ": "show_faqs"
+            "Other": "general_help"
+            
+        track_order:
+          type: "elicitation"
+          elicitation:
+            type: "text"
+            prompt: "Please enter your order ID:"
+          transitions:
+            default: "lookup_order"
+            
+        lookup_order:
+          type: "tool"
+          tool: "lookup_order"
+          transitions:
+            default: "show_order_status"
+            
+        show_order_status:
+          type: "response"
+          template: "Your order status: {order_status}"
+          
+        return_flow:
+          type: "elicitation"
+          elicitation:
+            type: "text"
+            prompt: "Please enter your order ID for the return:"
+          transitions:
+            default: "return_reason"
+            
+        return_reason:
+          type: "elicitation"
+          elicitation:
+            type: "select"
+            prompt: "What's the reason for return?"
+            options:
+              - "Defective item"
+              - "Wrong item received"
+              - "No longer needed"
+              - "Other"
+          transitions:
+            default: "process_return"
+            
+        process_return:
+          type: "sampling"
+          prompt: "Processing return request based on reason and order details"
+          context: ["order_id", "return_reason"]
+          transitions:
+            default: "return_complete"
+            
+        return_complete:
+          type: "response"
+          template: "Return initiated. Reference number: {return_reference}"
+          
+        show_faqs:
+          type: "response"
+          template: "Here are our frequently asked questions: {faqs}"
+          
+        general_help:
+          type: "sampling"
+          prompt: "Analyze customer query and provide assistance"
+          transitions:
+            default: "provide_help"
+            
+        provide_help:
+          type: "response"
+          template: "Based on your query: {assistance}"
+          
+  handlers:
+    path: "./handlers"
+    runtime: "typescript"

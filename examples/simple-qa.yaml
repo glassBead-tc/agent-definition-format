@@ -1,0 +1,22 @@
+version: "1.0"
+agent:
+  name: "simple-qa"
+  description: "Simple question-answering agent"
+  
+  capabilities:
+    sampling: true
+    
+  workflows:
+    main:
+      initial: "analyze"
+      
+      states:
+        analyze:
+          type: "sampling"
+          prompt: "Analyze the user's question and provide a comprehensive answer"
+          transitions:
+            default: "respond"
+            
+        respond:
+          type: "response"
+          template: "{answer}"

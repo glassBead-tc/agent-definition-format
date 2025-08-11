@@ -1,0 +1,105 @@
+version: "1.0"
+agent:
+  name: "elicitation-fallback-demo"
+  description: "Demonstrates elicitation with automatic fallback for clients without native support"
+  
+  capabilities:
+    elicitation: true
+    sampling: true
+    tools: true
+    resources: true
+    
+  tools:
+    - name: "process_user_data"
+      description: "Process the collected user data"
+      parameters:
+        name:
+          type: "string"
+          required: true
+        age:
+          type: "number"
+          required: true
+        preferences:
+          type: "object"
+          required: true
+      handler: "handlers.processUserData"
+    
+  resources:
+    - uri: "/user/profile"
+      description: "Current user profile being built"
+      handler: "handlers.getUserProfile"
+    
+  workflows:
+    onboarding:
+      initial: "welcome"
+      
+      states:
+        welcome:
+          type: "response"
+          template: "Welcome! I'll help you set up your profile. This will work whether your client supports elicitation or not."
+          transitions:
+            default: "get_name"
+            
+        get_name:
+          type: "elicitation"
+          prompt: "What's your name?"
+          elicitation:
+            type: "text"
+            prompt: "Please enter your full name"
+            pattern: "^[A-Za-z ]+$"
+            required: true
+          transitions:
+            default: "get_age"
+            
+        get_age:
+          type: "elicitation"
+          prompt: "How old are you?"
+          elicitation:
+            type: "number"
+            prompt: "Please enter your age"
+            min: 13
+            max: 120
+            required: true
+          transitions:
+            default: "get_preferences"
+            
+        get_preferences:
+          type: "elicitation"
+          prompt: "What type of notifications would you like?"
+          elicitation:
+            type: "select"
+            prompt: "Choose your notification preference"
+            options: ["Email only", "SMS only", "Both Email and SMS", "No notifications"]
+            required: true
+          transitions:
+            default: "confirm_data"
+            
+        confirm_data:
+          type: "elicitation"
+          prompt: "Your profile:\n- Name: {get_name_response}\n- Age: {get_age_response}\n- Notifications: {get_preferences_response}\n\nIs this correct?"
+          elicitation:
+            type: "confirm"
+            prompt: "Please confirm your profile information"
+            required: true
+          transitions:
+            "true": "process_profile"
+            "false": "get_name"
+            
+        process_profile:
+          type: "tool"
+          tool: "process_user_data"
+          parameters:
+            name: "{get_name_response}"
+            age: "{get_age_response}"
+            preferences:
+              notifications: "{get_preferences_response}"
+          transitions:
+            default: "complete"
+            
+        complete:
+          type: "response"
+          template: "Profile created successfully! Your data has been saved."
+          
+  handlers:
+    path: "./handlers"
+    runtime: "typescript"

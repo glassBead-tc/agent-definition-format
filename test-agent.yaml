@@ -1,0 +1,85 @@
+version: "1.0"
+agent:
+  name: "test-agent"
+  description: "Agent with elicitation fallback support"
+  
+  capabilities:
+    elicitation: true
+    sampling: true
+    tools: true
+    resources: true
+    
+  tools:
+    - name: "collect_info"
+      description: "Process collected information"
+      parameters:
+        data:
+          type: "object"
+          required: true
+      handler: "handlers.collectInfo"
+    
+  resources:
+    - uri: "/conversation/history"
+      description: "Conversation history with fallback support"
+      handler: "handlers.getHistory"
+    
+  workflows:
+    interactive:
+      initial: "welcome"
+      
+      states:
+        welcome:
+          type: "response"
+          template: "Welcome! This agent works with or without elicitation support."
+          transitions:
+            default: "get_input"
+            
+        get_input:
+          type: "elicitation"
+          prompt: "What would you like to do?"
+          elicitation:
+            type: "select"
+            prompt: "Please choose an option"
+            options: ["Process Data", "Get Information", "Configure Settings", "Exit"]
+            required: true
+          transitions:
+            "Process Data": "process"
+            "Get Information": "info"
+            "Configure Settings": "configure"
+            "Exit": "goodbye"
+            
+        process:
+          type: "tool"
+          tool: "collect_info"
+          transitions:
+            default: "complete"
+            
+        info:
+          type: "sampling"
+          prompt: "Retrieving information..."
+          transitions:
+            default: "complete"
+            
+        configure:
+          type: "elicitation"
+          prompt: "Enter configuration value"
+          elicitation:
+            type: "text"
+            prompt: "Please provide configuration"
+            pattern: "^[A-Za-z0-9_]+$"
+          transitions:
+            default: "complete"
+            
+        complete:
+          type: "response"
+          template: "Task completed successfully!"
+          transitions:
+            default: "get_input"
+            
+        goodbye:
+          type: "response"
+          template: "Thank you for using test-agent. Goodbye!"
+          
+  handlers:
+    path: "./handlers"
+    runtime: "typescript"
