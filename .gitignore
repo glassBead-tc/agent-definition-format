@@ -10,11 +10,11 @@ build/
 .claude-flow/
 .swarm/
 
-# Documentation and specs (kept in git but excluded from npm)
-# specs/
-# docs/
-# IMPLEMENTATION.md
-# MIGRATION-GUIDE.md
+# Documentation and specs (excluded from both git and npm)
+specs/
+docs/
+IMPLEMENTATION.md
+MIGRATION-GUIDE.md
 
 # Test coverage
 coverage/
